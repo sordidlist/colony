@@ -1,6 +1,6 @@
 ﻿namespace _Custom.Code.Creature_System.Interfaces
 {
-    public interface NavigationHandler
+    public interface INavigationHandler
     {
         public bool HasDestination();
         public void SetDestination();

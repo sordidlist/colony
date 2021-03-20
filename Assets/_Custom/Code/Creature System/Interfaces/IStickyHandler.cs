@@ -1,6 +1,6 @@
 ﻿namespace _Custom.Code.Creature_System.Interfaces
 {
-    public interface StickyHandler
+    public interface IStickyHandler
     {
         public void CheckStickiness();
         public void EnableStickyInstance();

@@ -1,6 +1,6 @@
 ﻿namespace _Custom.Code.Creature_System.Interfaces
 {
-    public interface SensorRaycastHandler
+    public interface ISensorRaycastHandler
     {
         public bool HasNearbySurfacePoint();
         public void GetNearbySurfacePoint();

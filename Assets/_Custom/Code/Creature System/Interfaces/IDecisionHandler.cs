@@ -1,6 +1,6 @@
 ﻿namespace _Custom.Code.Creature_System.Interfaces
 {
-    public interface DecisionHandler
+    public interface IDecisionHandler
     {
         
     }
