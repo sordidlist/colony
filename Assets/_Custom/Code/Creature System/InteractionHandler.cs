@@ -1,17 +1,15 @@
-﻿using _Custom.Code.Creature_System.Interfaces;
-
-namespace _Custom.Code.Creature_System
+﻿namespace _Custom.Code.Creature_System
 {
-    public class InteractionHandler : IInteractionHandler
+    public class InteractionHandler : Singleton<InteractionHandler>
     {
-        public void SelectInstance()
+        public void SelectInstance(CreatureAgent.CreatureAgent instance)
         {
-            throw new System.NotImplementedException();
+            
         }
 
-        public void DeselectInstance()
+        public void DeselectInstance(CreatureAgent.CreatureAgent instance)
         {
-            throw new System.NotImplementedException();
+            
         }
     }
 }

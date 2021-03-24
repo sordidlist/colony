@@ -1,27 +1,29 @@
-﻿using _Custom.Code.Creature_System.Interfaces;
+﻿using UnityEngine;
 
 namespace _Custom.Code.Creature_System
 {
-    public class NavigationHandler : INavigationHandler
+    public class NavigationHandler : Singleton<NavigationHandler>
     {
-        public bool HasDestination()
+        public bool HasDestination(CreatureAgent.CreatureAgent instance)
         {
-            throw new System.NotImplementedException();
+            Vector3 destination = instance.GetDestination();
+            if (destination == Vector3.zero) return true;
+            return false;
         }
 
-        public void SetDestination()
+        public void SetDestination(CreatureAgent.CreatureAgent instance, Vector3 destination)
         {
-            throw new System.NotImplementedException();
+            instance.SetDestination(destination);
         }
 
-        public void GetDistanceEuclidian()
+        public float GetDistanceEuclidian(Vector3 start, Vector3 destination)
         {
-            throw new System.NotImplementedException();
+            return Vector3.Distance(start, destination);
         }
 
-        public void GetDestinationAngle()
+        public float GetDestinationAngle(Vector3 start, Vector3 destination)
         {
-            throw new System.NotImplementedException();
+            return Vector3.SignedAngle(start, destination, Vector3.up);
         }
     }
 }
