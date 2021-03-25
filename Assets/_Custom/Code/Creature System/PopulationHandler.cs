@@ -5,8 +5,8 @@ namespace _Custom.Code.Creature_System
 {
     public class PopulationHandler : Singleton<PopulationHandler>
     {
-        private List<CreatureAgent.CreatureAgent> registeredCreatureAgents;
-        private List<CreatureAgent.CreatureAgent> batchedCreatureAgents;
+        public List<CreatureAgent.CreatureAgent> registeredCreatureAgents;
+        public List<CreatureAgent.CreatureAgent> batchedCreatureAgents;
 
         public void Start()
         {
@@ -29,6 +29,11 @@ namespace _Custom.Code.Creature_System
         public int GetCreatureAgentCount()
         {
             return registeredCreatureAgents.Count;
+        }
+
+        public void RegisterCreatureAgent(CreatureAgent.CreatureAgent creatureAgent)
+        {
+            registeredCreatureAgents.Add(creatureAgent);
         }
     }
 }

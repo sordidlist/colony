@@ -8,12 +8,16 @@ namespace _Custom.Code.Creature_System.CreatureAgent
         private GPUICrowdPrefab gpuiCrowdPrefab;
         private CreatureType creatureType;
 
+        public PopulationHandler populationHandler;
+
         private Vector3 destination;
 
         public void Awake()
         {
             gpuiCrowdPrefab = GetComponent<GPUICrowdPrefab>();
             SetCreatureType();
+            CheckPopulationHandler();
+            RegisterCreatureAgent();
         }
 
         public GPUICrowdPrefab GetGPUICrowdPrefab()
@@ -53,6 +57,22 @@ namespace _Custom.Code.Creature_System.CreatureAgent
                 Debug.LogWarning("Undefined creature " + gameObject.name + " encountered!");
             }
             this.creatureType = creatureType;
+        }
+
+        private void CheckPopulationHandler()
+        {
+            if (populationHandler.Equals(null))
+                Debug.LogWarning("The PopulationHandler on " + gameObject.name + "'s CreatureAgent component needs " +
+                                 "to be set. Please drag & drop this scene's Creature System object onto the CreatureAgent component.");
+        }
+
+        private void RegisterCreatureAgent()
+        {
+            if (!populationHandler.Equals(null))
+            {
+                Debug.Log(gameObject.name);
+                populationHandler.RegisterCreatureAgent(this);
+            }
         }
     }
 }
