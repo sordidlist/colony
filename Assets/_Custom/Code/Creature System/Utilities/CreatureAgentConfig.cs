@@ -4,7 +4,8 @@
     {
         // These are the parameters that should be able to be safely tweaked to adjust game performance without
         // necessarily breaking it
-        
+
+        public static bool USE_MAXIMUM_CREATURE_AGENT_BATCH_SIZE = true;
         public static int MAXIMUM_CREATURE_AGENT_BATCH_SIZE = 1000;
     }
 }
