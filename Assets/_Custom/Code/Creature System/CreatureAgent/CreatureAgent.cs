@@ -1,4 +1,5 @@
 ﻿using GPUInstancer.CrowdAnimations;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace _Custom.Code.Creature_System.CreatureAgent
@@ -66,6 +67,7 @@ namespace _Custom.Code.Creature_System.CreatureAgent
                                  "to be set. Please drag & drop this scene's Creature System object onto the CreatureAgent component.");
         }
 
+        [Button("Register Creature Agent")]
         private void RegisterCreatureAgent()
         {
             if (!populationHandler.Equals(null))

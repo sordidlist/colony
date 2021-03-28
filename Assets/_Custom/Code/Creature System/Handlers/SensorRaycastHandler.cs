@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using _Custom.Code.Creature_System.Utilities;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -37,127 +38,91 @@ namespace _Custom.Code.Creature_System
         public void Update()
         {
             // Pull aside a batch of creatures upon which to perform sensor raycasting
+            List<CreatureAgent.CreatureAgent> batchedCreatureAgents = populationHandler.batchedCreatureAgents;
             
             // Define sensor raycast variables
+            int creatureCount = batchedCreatureAgents.Count;
             
+            NativeArray<RaycastCommand> sensorRaycastCommands = 
+                new NativeArray<RaycastCommand>(CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS.Length * creatureCount, 
+                    Allocator.Persistent);
+            
+            NativeArray<Vector3> sensorOriginPoints =
+                new NativeArray<Vector3>(creatureCount, Allocator.Persistent);
+            NativeArray<RaycastHit> sensorHitPoints =
+                new NativeArray<RaycastHit>(sensorRaycastCommands.Length, Allocator.Persistent);
+            NativeArray<Vector3> objectBitePoints =
+                new NativeArray<Vector3>(creatureCount, Allocator.Persistent);
+            NativeArray<LayerMask> layerMask = new NativeArray<LayerMask>(1, Allocator.Persistent);
+            NativeArray<Vector3> directionsToCastSensorRaycastsFromCreatureAgents =
+                new NativeArray<Vector3>(
+                    CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS.Length,
+                    Allocator.Persistent);
+            NativeArray<float> maxCreatureAgentScanDistance = new NativeArray<float>(1, Allocator.Persistent);
+            
+            layerMask[0] = RayCastLayerMask;
+            for (int directionIndex = 0;
+                directionIndex < CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS.Length;
+                directionIndex++)
+            {
+                directionsToCastSensorRaycastsFromCreatureAgents[directionIndex] =
+                    CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS[directionIndex];
+            }
+            maxCreatureAgentScanDistance[0] = CreatureAgentConfig.MAX_CREATURE_AGENT_SCAN_DISTANCE;
+            
+            List<Transform> creatureTransformsList = new List<Transform>();
+            for (var i = 0; i < creatureCount; i++)
+                creatureTransformsList.Add(populationHandler.batchedCreatureAgents[i].transform);
+
+            Transform[] creatureTransformsArray = creatureTransformsList.ToArray();
+            TransformAccessArray creatureTransformAccessArray =
+                new TransformAccessArray(creatureTransformsArray);
+
             // Execute sensor raycast and store results
+            CreatureSystemJobs.GetRaycastDirectionsRelativeToCreatureAgentsTransformsJob
+                getRaycastDirectionsRelativeToCreatureAgentTransformsJob =
+                    new CreatureSystemJobs.GetRaycastDirectionsRelativeToCreatureAgentsTransformsJob{
+                        sensorRaycastCommands = sensorRaycastCommands,
+                        sensorOriginPoints = sensorOriginPoints,
+                        objectBitePoints = objectBitePoints,
+                        layerMask = layerMask,
+                        directionsToCastSensorRaycastsFromCreatureAgents = directionsToCastSensorRaycastsFromCreatureAgents,
+                        maxCreatureAgentScanDistance = maxCreatureAgentScanDistance
+                    };
+            JobHandle getDirectionsJobHandle =
+                getRaycastDirectionsRelativeToCreatureAgentTransformsJob.Schedule(creatureTransformAccessArray);
+            
+            JobHandle.ScheduleBatchedJobs();
+            
+            // Fire all raycasts and store results
+            JobHandle sensorRaycastsJobHandle = RaycastCommand.ScheduleBatch(sensorRaycastCommands, sensorHitPoints,
+                CreatureAgentConfig.SENSOR_RAYCAST_PARALLEL_JOBS_COUNT, getDirectionsJobHandle);
+            
+            sensorRaycastsJobHandle.Complete();
+
+            // Dispose of native memory
+            DisposeOfNativeMemory(sensorRaycastCommands, sensorHitPoints, sensorOriginPoints, objectBitePoints, layerMask, 
+                directionsToCastSensorRaycastsFromCreatureAgents, maxCreatureAgentScanDistance, creatureTransformAccessArray);
+        }
+
+
+        private void DisposeOfNativeMemory(NativeArray<RaycastCommand> sensorRaycastCommands, NativeArray<RaycastHit> sensorHitPoints,
+            NativeArray<Vector3> sensorOriginPoints, NativeArray<Vector3> objectBitePoints,
+            NativeArray<LayerMask> layerMask, NativeArray<Vector3> directionsToCastSensorRaycastsFromCreatureAgents, 
+            NativeArray<float> maxCreatureAgentScanDistance, TransformAccessArray creatureTransformAccessArray)
+        {
+            sensorRaycastCommands.Dispose();
+            sensorHitPoints.Dispose();
+            sensorOriginPoints.Dispose();
+            objectBitePoints.Dispose();
+            layerMask.Dispose();
+            directionsToCastSensorRaycastsFromCreatureAgents.Dispose();
+            maxCreatureAgentScanDistance.Dispose();
+            creatureTransformAccessArray.Dispose();
         }
 
         public void OldUpdate()
         {
-            List<int> agentIndeces = new List<int>();
-            float timeIncrement = Time.deltaTime;
-            /*foreach (CreatureAgent.CreatureAgent creatureAgent in populationHandler.GetRandomSampleCreaturesByType(10, CreatureType.NEEDLE_ANT))
-            {
-                
-            }*/
-            for (int agentIndex = 0; agentIndex < populationHandler.GetCreatureAgentCount(); agentIndex++)
-            {
-                //CreatureAgent.CreatureAgent creatureAgent = populationHandler.GetCreatureAgent(agentIndex);
-                /*creatureAgent.raycastTimer += timeIncrement +
-                                              Random.Range(0f,
-                                                  CreatureSystemConfigs.MAX_RANDOM_RAYCAST_TIMER_OFFSET);
-                if (creatureAgent.raycastTimer >= CreatureSystemConfigs.MAX_RAYCAST_TIMER)
-                {
-                    agentIndeces.Add(agentIndex);
-                    creatureAgent.raycastTimer = 0f;
-                }*/
-            }
-
-            var creatureCount = agentIndeces.Count;
-
-            if (creatureCount > 0)
-                try
-                {
-                    var forwardRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var leftRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var rightRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var upRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var downRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var downBackRacycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var forwardDownRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var forwardDownLeftRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var forwardDownRightRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-                    var biteObjectNormalRaycastCommands =
-                        new NativeArray<RaycastCommand>(creatureCount, Allocator.Persistent);
-
-                    var sensorOriginPoints =
-                        new NativeArray<Vector3>(creatureCount, Allocator.Persistent);
-                    var objectBitePoints =
-                        new NativeArray<Vector3>(creatureCount, Allocator.Persistent);
-                    var layerMask = new NativeArray<LayerMask>(1, Allocator.Persistent);
-
-                    var forwardRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-                    var leftRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-                    var rightRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-                    var upRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-                    var downRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-                    var downBackRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-                    var forwardDownRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-                    var forwardDownLeftRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-                    var forwardDownRightRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-
-                    var biteObjectNormalRaycastHits =
-                        new NativeArray<RaycastHit>(creatureCount, Allocator.Persistent);
-
-                    for (var i = 0; i < agentIndeces.Count; i++)
-                    {
-                        /*sensorOriginPoints[i] =
-                            creaturePopulationController.creatureAgents[agentIndeces[i]].gameObject.transform
-                                .position;
-                        objectBitePoints[i] =
-                            creaturePopulationController.creatureAgents[agentIndeces[i]].objectBitePoint;*/
-                    }
-
-                    layerMask[0] = RayCastLayerMask;
-
-                    var creatureTransformsList = new List<Transform>();
-                    //for (var i = 0; i < agentIndeces.Count; i++)
-                    //    creatureTransformsList.Add(creaturePopulationController.creatureAgentTranforms[i]);
-
-                    var creatureTransformsArray = creatureTransformsList.ToArray();
-                    var creatureTransformAccessArray =
-                        new TransformAccessArray(creatureTransformsArray);
-
-                    /*
-                     * COMPUTE DIRECTIONS IN WHICH TO FIRE THE RAYCASTS
-                     */
-
-                    /*var getRaycastDirectionsJob =
-                        new CreatureSystemJobs.GetRaycastDirectionsJob
-                        {
-                            forwardRaycastCommands = forwardRaycastCommands,
-                            downRaycastCommands = downRaycastCommands,
-                            upRaycastCommands = upRaycastCommands,
-                            leftRaycastCommands = leftRaycastCommands,
-                            rightRaycastCommands = rightRaycastCommands,
-                            forwardDownRaycastCommands = forwardDownRaycastCommands,
-                            forwardDownLeftRaycastCommands = forwardDownLeftRaycastCommands,
-                            forwardDownRightRaycastCommands = forwardDownRightRaycastCommands,
-                            downBackRaycastCommands = downBackRacycastCommands,
-                            sensorOriginPoints = sensorOriginPoints,
-                            biteObjectNormalRaycastCommands = biteObjectNormalRaycastCommands,
-                            objectBitePoints = objectBitePoints,
-                            layerMask = layerMask
-                        };*/
 
                     /*var getRaycastDirectionsJobHandle =
                         getRaycastDirectionsJob.Schedule(creatureTransformAccessArray);*/
@@ -209,8 +174,8 @@ namespace _Custom.Code.Creature_System
                     forwardDownRightRaycastJobHandle.Complete();
                     objectBiteNormalsRaycastJobHandle.Complete();*/
 
-                    for (var i = 0; i < agentIndeces.Count; i++)
-                    {
+                    //for (var i = 0; i < agentIndeces.Count; i++)
+                    //{
                         /*var creatureAgent = creaturePopulationController.creatureAgents[agentIndeces[i]];
                         creatureAgent.forwardRaycastHit = forwardRaycastHits[i];
                         creatureAgent.upRaycastHit = upRaycastHits[i];
@@ -245,7 +210,7 @@ namespace _Custom.Code.Creature_System
                         }
 
                         creatureAgent.raycastResultsAreReady = true;
-                        //Debug.Log(creatureAgent.ToString());*/
+                        //Debug.Log(creatureAgent.ToString());*//*
                     }
 
                     creatureTransformAccessArray.Dispose();
@@ -278,15 +243,15 @@ namespace _Custom.Code.Creature_System
                 catch (MissingReferenceException e)
                 {
                     Debug.LogWarning(e);
-                }
+                }*/
         }
 
-        private void CompareRaycastHitToCurrentClosest(RaycastHit raycastHit, CreatureAgent.CreatureAgent creatureAgent)
+        /*private void CompareRaycastHitToCurrentClosest(RaycastHit raycastHit, CreatureAgent.CreatureAgent creatureAgent)
         {
             //if (raycastHit.distance != 0)
                 //if (!raycastHit.collider.gameObject.Equals(gameObject))
                     //if (creatureAgent.closestRaycastHit.distance > raycastHit.distance)
                     //    creatureAgent.closestRaycastHit = raycastHit;
-        }
+        }*/
     }
 }
