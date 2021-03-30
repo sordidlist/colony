@@ -8,6 +8,7 @@ namespace _Custom.Code.Creature_System.CreatureAgent
     {
         private GPUICrowdPrefab gpuiCrowdPrefab;
         private CreatureType creatureType;
+        private bool registered;
 
         public PopulationHandler populationHandler;
 
@@ -37,6 +38,16 @@ namespace _Custom.Code.Creature_System.CreatureAgent
             this.destination = destination;
         }
 
+        public bool IsRegistered()
+        {
+            return registered;
+        }
+
+        public void SetRegistered()
+        {
+            registered = true;
+        }
+        
         public CreatureType GetCreatureType()
         {
             return creatureType;
@@ -72,7 +83,10 @@ namespace _Custom.Code.Creature_System.CreatureAgent
         {
             if (!populationHandler.Equals(null))
             {
-                Debug.Log(gameObject.name);
+                if (!populationHandler.setUpComplete)
+                {
+                    populationHandler.SetUpPopulationHandler();                    
+                }
                 populationHandler.RegisterCreatureAgent(this);
             }
         }

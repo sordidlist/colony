@@ -1,6 +1,8 @@
 ﻿using _Custom.Code.Creature_System.Utilities;
+using Drawing;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Jobs;
 
@@ -9,61 +11,12 @@ namespace _Custom.Code.Creature_System
     public class CreatureSystemJobs
     {
         [BurstCompile]
-        public struct GetRaycastDirsJob : IJobParallelForTransform
-        {
-            [ReadOnly] public NativeArray<LayerMask> layerMask;
-            [ReadOnly] public NativeArray<Vector3> sensorOriginPoints;
-            [ReadOnly] public NativeArray<Vector3> objectBitePoints;
-
-            public NativeArray<RaycastCommand> forwardRaycastCommands;
-            public NativeArray<RaycastCommand> upRaycastCommands;
-            public NativeArray<RaycastCommand> downRaycastCommands;
-            public NativeArray<RaycastCommand> downBackRaycastCommands;
-            public NativeArray<RaycastCommand> leftRaycastCommands;
-            public NativeArray<RaycastCommand> rightRaycastCommands;
-            public NativeArray<RaycastCommand> forwardDownRaycastCommands;
-            public NativeArray<RaycastCommand> forwardDownRightRaycastCommands;
-            public NativeArray<RaycastCommand> forwardDownLeftRaycastCommands;
-            public NativeArray<RaycastCommand> biteObjectNormalRaycastCommands;
-
-            public NativeArray<NativeArray<RaycastCommand>> raycastCommands;
-
-            public void Execute(int index, TransformAccess transform)
-            {
-                /*var directionsMap =
-                    new CreatureSystemConfigs.DirectionsMap(transform.localRotation);
-                forwardRaycastCommands[index] =
-                    new RaycastCommand(sensorOriginPoints[index], directionsMap.forward, 10f, layerMask[0]);
-                leftRaycastCommands[index] =
-                    new RaycastCommand(sensorOriginPoints[index], directionsMap.left, 10f, layerMask[0]);
-                rightRaycastCommands[index] =
-                    new RaycastCommand(sensorOriginPoints[index], directionsMap.right, 10f, layerMask[0]);
-                upRaycastCommands[index] =
-                    new RaycastCommand(sensorOriginPoints[index], directionsMap.up, 10f, layerMask[0]);
-                downRaycastCommands[index] =
-                    new RaycastCommand(sensorOriginPoints[index], directionsMap.down, 10f, layerMask[0]);
-                downBackRaycastCommands[index] =
-                    new RaycastCommand(sensorOriginPoints[index], directionsMap.downBack, 10f, layerMask[0]);
-                forwardDownRaycastCommands[index] = new RaycastCommand(sensorOriginPoints[index],
-                    directionsMap.forwardDown, 10f, layerMask[0]);
-                forwardDownLeftRaycastCommands[index] = new RaycastCommand(sensorOriginPoints[index],
-                    directionsMap.forwardDownLeft, 10f, layerMask[0]);
-                forwardDownRightRaycastCommands[index] = new RaycastCommand(sensorOriginPoints[index],
-                    directionsMap.forwardDownRight, 10f, layerMask[0]);
-                biteObjectNormalRaycastCommands[index] =
-                    new RaycastCommand(sensorOriginPoints[index], objectBitePoints[index] - sensorOriginPoints[index],
-                        10f, layerMask[0]);
-                        */
-            }
-        }
-        
-        [BurstCompile]
         public struct GetRaycastDirectionsRelativeToCreatureAgentsTransformsJob : IJobParallelForTransform
         {
             [NativeDisableParallelForRestriction] public NativeArray<RaycastCommand> sensorRaycastCommands;
             public NativeArray<Vector3> objectBitePoints;
+            public NativeArray<Vector3> sensorOriginPoints;
             
-            [ReadOnly] public NativeArray<Vector3> sensorOriginPoints;
             [ReadOnly] public NativeArray<LayerMask> layerMask;
             [ReadOnly] public NativeArray<Vector3> directionsToCastSensorRaycastsFromCreatureAgents;
             [ReadOnly] public NativeArray<float> maxCreatureAgentScanDistance;
@@ -74,6 +27,7 @@ namespace _Custom.Code.Creature_System
                     scanDirection < directionsToCastSensorRaycastsFromCreatureAgents.Length;
                     scanDirection++)
                 {
+                    sensorOriginPoints[index] = transform.position;
                     Vector3 directionRelativeToCreatureAgent = transform.rotation * 
                                                                directionsToCastSensorRaycastsFromCreatureAgents[scanDirection];
                     int sensorRaycastCommandIndex = (index * directionsToCastSensorRaycastsFromCreatureAgents.Length) +
@@ -86,13 +40,94 @@ namespace _Custom.Code.Creature_System
                 }
             }
         }
-
+        
         [BurstCompile]
-        public struct FireSensorRaycastsForAllCreatureAgentsJob : IJobParallelForTransform
+        public struct GetNearestRaycastHitsJob : IJobParallelForTransform
         {
+            public NativeArray<RaycastHit> closestRaycastHits;
+            
+            [ReadOnly] public NativeArray<RaycastHit> sensorRaycastHits;
+            [ReadOnly] public NativeArray<Vector3> directionsToCastSensorRaycastsFromCreatureAgents;
+            
             public void Execute(int index, TransformAccess transform)
             {
-                
+                RaycastHit closestRaycastHit = new RaycastHit();
+                float closestRaycastHitDistance = 99999;
+                for (int creatureAgentRaycastHitsIndex = 0;
+                    creatureAgentRaycastHitsIndex < directionsToCastSensorRaycastsFromCreatureAgents.Length;
+                    creatureAgentRaycastHitsIndex++)
+                {
+                    if (sensorRaycastHits[
+                        (index * directionsToCastSensorRaycastsFromCreatureAgents.Length) +
+                        creatureAgentRaycastHitsIndex].distance < closestRaycastHitDistance)
+                    {
+                        closestRaycastHitDistance =
+                            sensorRaycastHits[
+                                (index * directionsToCastSensorRaycastsFromCreatureAgents.Length) +
+                                creatureAgentRaycastHitsIndex].distance;
+                        closestRaycastHit =
+                            sensorRaycastHits[
+                                (index * directionsToCastSensorRaycastsFromCreatureAgents.Length) +
+                                creatureAgentRaycastHitsIndex];
+                    }
+                }
+
+                closestRaycastHits[index] = closestRaycastHit;
+            }
+        }
+        
+        [BurstCompile]
+        public struct DrawingJob : IJob
+        {
+            public CommandBuilder builder;
+            [ReadOnly] public NativeArray<Vector3> origin;
+            [ReadOnly] public NativeArray<float> sphereRadius;
+            [ReadOnly] public NativeArray<Vector3> directionsToScan;
+            [ReadOnly] public NativeArray<Vector3> objectBitePoints;
+            [ReadOnly] public NativeArray<Vector3> objectBiteNormals;
+            [ReadOnly] public NativeArray<Color> lineColors;
+
+            public NativeArray<RaycastHit> raycastHitPoints;
+            public NativeArray<RaycastHit> closestHitPoints;
+
+            public void Execute()
+            {
+                for (var originIndex = 0; originIndex < origin.Length; originIndex++)
+                {
+                    var color = 0;
+                    for (var hitPointIndex = originIndex * directionsToScan.Length;
+                        hitPointIndex < originIndex * directionsToScan.Length + directionsToScan.Length;
+                        hitPointIndex++)
+                    {
+                        if (raycastHitPoints[hitPointIndex].point != Vector3.zero)
+                        {
+                            builder.Line(origin[originIndex], raycastHitPoints[hitPointIndex].point, lineColors[color]);
+                            builder.WireSphere(raycastHitPoints[hitPointIndex].point, sphereRadius[0],
+                                lineColors[color]);
+                        }
+                        /*else
+                        {
+                            builder.Line(origin[originIndex],
+                                origin[originIndex] + rotation[originIndex] * directionsToScan[color],
+                                lineColors[color]);
+                                
+                        }*/
+
+                        color++;
+                    }
+
+                    if (objectBitePoints[originIndex] != Vector3.zero)
+                    {
+                        builder.Line(origin[originIndex], objectBitePoints[originIndex], Color.black);
+                        builder.WireBox(objectBitePoints[originIndex], Quaternion.identity, sphereRadius[0]);
+
+                        builder.Line(objectBitePoints[originIndex],
+                            objectBitePoints[originIndex] + objectBiteNormals[originIndex], Color.red + Color.yellow);
+                    }
+
+                    builder.WireSphere(closestHitPoints[originIndex].point, sphereRadius[0] * 2,
+                        DebugSystemConfig.CLOSEST_HIT_POINT_LINE_COLOR);
+                }
             }
         }
     }

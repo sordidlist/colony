@@ -6,11 +6,6 @@ namespace _Custom.Code.Creature_System
     {
         private PopulationHandler populationHandler;
 
-        public SpawnHandler(PopulationHandler populationHandler)
-        {
-            this.populationHandler = populationHandler;
-        }
-        
         public void SpawnInstance(Vector3 spawnPoint)
         {
             

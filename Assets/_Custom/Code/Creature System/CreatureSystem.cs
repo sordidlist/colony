@@ -45,13 +45,16 @@ namespace _Custom.Code.Creature_System
             sensorRaycastHandler.SetPopulationHandler(populationHandler);
             
             spawnHandler = GetComponent<SpawnHandler>();
+            
             stickyHandler = GetComponent<StickyHandler>();
+            stickyHandler.SetSensorRaycastHandler(sensorRaycastHandler);
             
             decisionHandler  = GetComponent<DecisionHandler>();
             decisionHandler.SetHelperHandlers(navigationHandler, pheromoneHandler, sensorRaycastHandler, stickyHandler, 
                 animationHandler, spawnHandler);
 
             debugHandler = GetComponent<DebugHandler>();
+            debugHandler.SetHandlers(sensorRaycastHandler, populationHandler);
             
             metricsHandler = GetComponent<MetricsHandler>();
             metricsHandler.SetHelperHandlers(animationHandler, decisionHandler, navigationHandler, pheromoneHandler, 

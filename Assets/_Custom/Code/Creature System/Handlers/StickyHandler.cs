@@ -2,6 +2,8 @@
 {
     public class StickyHandler : Singleton<StickyHandler>
     {
+        private SensorRaycastHandler sensorRaycastHandler;
+        
         public void CheckStickiness()
         {
             
@@ -15,6 +17,11 @@
         public void DisableStickyInstance()
         {
             
+        }
+
+        public void SetSensorRaycastHandler(SensorRaycastHandler sensorRaycastHandler)
+        {
+            this.sensorRaycastHandler = sensorRaycastHandler;
         }
     }
 }

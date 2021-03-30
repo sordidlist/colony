@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using _Custom.Code.Creature_System.Debug_System;
 using _Custom.Code.Creature_System.Utilities;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace _Custom.Code.Creature_System
@@ -9,13 +9,37 @@ namespace _Custom.Code.Creature_System
     {
         public List<CreatureAgent.CreatureAgent> registeredCreatureAgents;
         public List<CreatureAgent.CreatureAgent> batchedCreatureAgents;
+        public bool setUpComplete;
 
-        public void Awake()
+        private bool debugMode = false;
+
+        [Button("Toggle Debug Mode")]
+        [GUIColor("GetToggleColor")]
+        private void ToggleDebugMode()
         {
-            registeredCreatureAgents = new List<CreatureAgent.CreatureAgent>();
-            batchedCreatureAgents = new List<CreatureAgent.CreatureAgent>();
+            debugMode = !debugMode;
         }
 
+        private Color GetToggleColor()
+        {
+            if (debugMode) return new Color(0, 0.5f, 0, 0.5f);
+            return new Color(0.5f, 0f, 0f, 0.5f);
+        }
+
+        public void Start()
+        {
+            if (!setUpComplete)
+                SetUpPopulationHandler();
+        }
+
+        public void SetUpPopulationHandler()
+        {
+            setUpComplete = true;
+            if (debugMode) Debug.Log("Defining creature agent lists...");
+            registeredCreatureAgents = new List<CreatureAgent.CreatureAgent>();
+            batchedCreatureAgents = new List<CreatureAgent.CreatureAgent>();
+            if (debugMode) Debug.Log("Creature agent lists defined.");
+        }
         public void Update()
         {
             // Draw a simple random sample of all active creature agents
@@ -23,11 +47,14 @@ namespace _Custom.Code.Creature_System
             if (sampleSize > CreatureAgentConfig.MAXIMUM_CREATURE_AGENT_BATCH_SIZE && 
                 CreatureAgentConfig.USE_MAXIMUM_CREATURE_AGENT_BATCH_SIZE)
                 sampleSize = CreatureAgentConfig.MAXIMUM_CREATURE_AGENT_BATCH_SIZE;
-            
-            batchedCreatureAgents.Clear();
+            if (debugMode) Debug.Log("Current sample size: " + sampleSize);
 
             List<int> selectedCreatureAgentIndeces =
                 GetRandomSetOfIntegersFromRange(GetCreatureAgentCount(), sampleSize);
+            
+            if (debugMode) Debug.Log("Calculated selected creature agent indeces for batching: " + selectedCreatureAgentIndeces);
+            
+            batchedCreatureAgents.Clear();
             
             PopulateBatchedCreatureAgents(selectedCreatureAgentIndeces);
         }
@@ -39,7 +66,12 @@ namespace _Custom.Code.Creature_System
 
         public void RegisterCreatureAgent(CreatureAgent.CreatureAgent creatureAgent)
         {
-            registeredCreatureAgents.Add(creatureAgent);
+            if (!creatureAgent.IsRegistered())
+            {
+                if (debugMode) Debug.Log("Registering creature agent: " + creatureAgent.name);
+                creatureAgent.SetRegistered();
+                registeredCreatureAgents.Add(creatureAgent);
+            }
         }
 
         private List<int> GetRandomSetOfIntegersFromRange(int maxValue, int sampleSize)
@@ -66,6 +98,7 @@ namespace _Custom.Code.Creature_System
         {
             for (int i = 0; i < selectedCreatureAgentsList.Count; i++)
             {
+                if (debugMode) Debug.Log("Populating batch with creature agent: " + i + "...");
                 batchedCreatureAgents.Add(registeredCreatureAgents[selectedCreatureAgentsList[i]]);
             }
         }
