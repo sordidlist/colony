@@ -15,6 +15,7 @@ namespace _Custom.Code.Creature_System
         public RaycastHit[] sensorHitPointsArray;
         public RaycastHit[] closestHitPointsArray;
         private bool debugMode = false;
+        public bool launched = false;
         
         [Button("Toggle Debug Mode")]
         [GUIColor("GetToggleColor")]
@@ -38,7 +39,7 @@ namespace _Custom.Code.Creature_System
 
         protected void Awake()
         {
-            RayCastLayerMask = ~LayerMask.GetMask("Ignore Raycast", "Player Character");
+            RayCastLayerMask = ~LayerMask.GetMask("Ignore Raycast", "Player Character", "Creature Agent");
         }
 
         public void Update()
@@ -126,9 +127,19 @@ namespace _Custom.Code.Creature_System
             sensorHitPointsArray = sensorHitPoints.ToArray();
             closestHitPointsArray = closestHitPoints.ToArray();
 
+            if (debugMode)
+            {
+                foreach (RaycastHit sensorHitPoint in sensorHitPointsArray)
+                {
+                    Debug.Log("Sensor point: " + sensorHitPoint.point + " detected.");
+                }
+            }
+
             // Dispose of native memory
             DisposeOfNativeMemory(sensorRaycastCommands, sensorHitPoints, closestHitPoints, sensorOriginPoints, objectBitePoints, layerMask, 
                 directionsToCastSensorRaycastsFromCreatureAgents, maxCreatureAgentScanDistance, creatureTransformAccessArray);
+
+            if (!launched) launched = true;
         }
 
 

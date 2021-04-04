@@ -57,9 +57,8 @@ namespace _Custom.Code.Creature_System
                     creatureAgentRaycastHitsIndex < directionsToCastSensorRaycastsFromCreatureAgents.Length;
                     creatureAgentRaycastHitsIndex++)
                 {
-                    if (sensorRaycastHits[
-                        (index * directionsToCastSensorRaycastsFromCreatureAgents.Length) +
-                        creatureAgentRaycastHitsIndex].distance < closestRaycastHitDistance)
+                    if ((!sensorRaycastHits[(index * directionsToCastSensorRaycastsFromCreatureAgents.Length) + creatureAgentRaycastHitsIndex].point.Equals(Vector3.zero)) && 
+                        (sensorRaycastHits[(index * directionsToCastSensorRaycastsFromCreatureAgents.Length) + creatureAgentRaycastHitsIndex].distance < closestRaycastHitDistance))
                     {
                         closestRaycastHitDistance =
                             sensorRaycastHits[
@@ -70,9 +69,22 @@ namespace _Custom.Code.Creature_System
                                 (index * directionsToCastSensorRaycastsFromCreatureAgents.Length) +
                                 creatureAgentRaycastHitsIndex];
                     }
+                    closestRaycastHits[index] = closestRaycastHit;
                 }
-
-                closestRaycastHits[index] = closestRaycastHit;
+            }
+        }
+        
+        [BurstCompile]
+        public struct CheckCreatureAgentStickinessJob : IJobParallelFor
+        {
+            public NativeArray<RaycastHit> closestHitPoints;
+            public NativeArray<float> maxStickyDistance;
+            public NativeArray<bool> isSticking;
+            
+            public void Execute(int index)
+            {
+                if (closestHitPoints[index].point.Equals(Vector3.zero)) isSticking[index] = false;
+                else isSticking[index] = closestHitPoints[index].distance <= maxStickyDistance[index];
             }
         }
         
@@ -86,6 +98,7 @@ namespace _Custom.Code.Creature_System
             [ReadOnly] public NativeArray<Vector3> objectBitePoints;
             [ReadOnly] public NativeArray<Vector3> objectBiteNormals;
             [ReadOnly] public NativeArray<Color> lineColors;
+            [ReadOnly] public NativeArray<bool> isSticking;
 
             public NativeArray<RaycastHit> raycastHitPoints;
             public NativeArray<RaycastHit> closestHitPoints;
@@ -99,7 +112,7 @@ namespace _Custom.Code.Creature_System
                         hitPointIndex < originIndex * directionsToScan.Length + directionsToScan.Length;
                         hitPointIndex++)
                     {
-                        if (raycastHitPoints[hitPointIndex].point != Vector3.zero)
+                        if (raycastHitPoints.Length > 0 && raycastHitPoints[hitPointIndex].point != Vector3.zero)
                         {
                             builder.Line(origin[originIndex], raycastHitPoints[hitPointIndex].point, lineColors[color]);
                             builder.WireSphere(raycastHitPoints[hitPointIndex].point, sphereRadius[0],
@@ -125,8 +138,15 @@ namespace _Custom.Code.Creature_System
                             objectBitePoints[originIndex] + objectBiteNormals[originIndex], Color.red + Color.yellow);
                     }
 
-                    builder.WireSphere(closestHitPoints[originIndex].point, sphereRadius[0] * 2,
+                    builder.WireSphere(closestHitPoints[originIndex].point, sphereRadius[0] * 0.5f,
                         DebugSystemConfig.CLOSEST_HIT_POINT_LINE_COLOR);
+                    
+                    if (isSticking[originIndex])
+                        builder.WireSphere(origin[originIndex], sphereRadius[0],
+                            DebugSystemConfig.IS_STICKING_COLOR);
+                    else
+                        builder.WireSphere(origin[originIndex], sphereRadius[0],
+                            DebugSystemConfig.IS_NOT_STICKING_COLOR);
                 }
             }
         }

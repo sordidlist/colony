@@ -1,4 +1,5 @@
-﻿using _Custom.Code.Creature_System.Utilities;
+﻿using System;
+using _Custom.Code.Creature_System.Utilities;
 using Drawing;
 using Sirenix.OdinInspector;
 using Unity.Collections;
@@ -53,7 +54,7 @@ namespace _Custom.Code.Creature_System.Debug_System
 
         private void Update()
         {
-            if (executeDebugHandler)
+            if (executeDebugHandler && sensorRaycastHandler.sensorHitPointsArray != null)
             {
                 // Establish drawing variables
                 
@@ -71,7 +72,8 @@ namespace _Custom.Code.Creature_System.Debug_System
                         .Length;
                     scanDirectionIndex++)
                 {
-                    if(debugMode) Debug.Log("Debug Handler establishing direction: " + CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS[scanDirectionIndex] + "...");
+                    if(debugMode) Debug.Log("Debug Handler establishing direction: " + 
+                                            CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS[scanDirectionIndex] + "...");
                     scanDirections[scanDirectionIndex] =
                         CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS[scanDirectionIndex];
                 }
@@ -81,7 +83,7 @@ namespace _Custom.Code.Creature_System.Debug_System
 
                 for (int lineColorIndex = 0; lineColorIndex < lineColors.Length; lineColorIndex++)
                 {
-                    float colorValue = 255 * (lineColorIndex / (float) lineColors.Length);
+                    float colorValue =  (lineColorIndex / (float) lineColors.Length);
                     lineColors[lineColorIndex] = new Color(colorValue, colorValue, colorValue);
                 }
 
@@ -100,6 +102,7 @@ namespace _Custom.Code.Creature_System.Debug_System
                     new NativeArray<Vector3>(creatureAgentCount, Allocator.Persistent);
                 NativeArray<Vector3> objectBiteNormals =
                     new NativeArray<Vector3>(creatureAgentCount, Allocator.Persistent);
+                NativeArray<bool> isSticking = new NativeArray<bool>(creatureAgentCount, Allocator.Persistent);
 
                 for (int creatureAgentIndex = 0;
                     creatureAgentIndex < creatureAgentCount;
@@ -122,16 +125,16 @@ namespace _Custom.Code.Creature_System.Debug_System
                         for (int scanDirectionIndex = 0;
                             scanDirectionIndex < scanDirections.Length;
                             scanDirectionIndex++)
-                        {
+                    {
                             raycastHitPoints[creatureAgentIndex * scanDirections.Length + scanDirectionIndex] =
                                 sensorRaycastHandler.sensorHitPointsArray[
                                     creatureAgentIndex * scanDirections.Length + scanDirectionIndex];
-                            if(debugMode) 
-                                Debug.Log("Debug Handler raycastHitPoint[" + creatureAgentIndex * 
-                                    scanDirections.Length + scanDirectionIndex + "] = " + raycastHitPoints[creatureAgentIndex * 
+                            if (debugMode)
+                                Debug.Log("Debug Handler raycastHitPoint[" + creatureAgentIndex *
+                                    scanDirections.Length + scanDirectionIndex + "] = " + raycastHitPoints[
+                                        creatureAgentIndex *
                                         scanDirections.Length + scanDirectionIndex]);
-
-                        }
+                    }
 
                         closestHitPoints[creatureAgentIndex] =
                             sensorRaycastHandler.closestHitPointsArray[creatureAgentIndex];
@@ -142,12 +145,18 @@ namespace _Custom.Code.Creature_System.Debug_System
                         //objectBiteNormals[creatureAgentIndex] = creatureAgent.objectBiteNormal;
 
                         hitPointSphereRadius[0] = DebugSystemConfig.DEBUG_RAYCASTHIT_SPHERE_COLLIDER_RADIUS;
+                        isSticking[creatureAgentIndex] = creatureAgent.IsSticking();
                         if(debugMode) 
                             Debug.Log("Debug Handler closestHitPoints[" + creatureAgentIndex + "] = " + closestHitPoints[creatureAgentIndex]);
                     }
                     catch (MissingReferenceException e)
                     {
                         Debug.LogError(e);
+                    }
+                    catch (IndexOutOfRangeException e)
+                    {
+                        if (debugMode)
+                            Debug.LogWarning(e);
                     }
 
                     var drawingJob = new CreatureSystemJobs.DrawingJob
@@ -160,7 +169,8 @@ namespace _Custom.Code.Creature_System.Debug_System
                         raycastHitPoints = raycastHitPoints,
                         closestHitPoints = closestHitPoints,
                         objectBitePoints = objectBitePoints,
-                        objectBiteNormals = objectBiteNormals
+                        objectBiteNormals = objectBiteNormals,
+                        isSticking = isSticking
                     };
                     drawingJob.Schedule().Complete();
                 }
@@ -173,6 +183,7 @@ namespace _Custom.Code.Creature_System.Debug_System
                 scanDirections.Dispose();
                 objectBitePoints.Dispose();
                 objectBiteNormals.Dispose();
+                isSticking.Dispose();
                 builder.Dispose();
             }
         }

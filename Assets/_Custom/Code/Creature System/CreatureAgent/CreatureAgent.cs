@@ -8,8 +8,11 @@ namespace _Custom.Code.Creature_System.CreatureAgent
     {
         private GPUICrowdPrefab gpuiCrowdPrefab;
         private CreatureType creatureType;
+        private RaycastHit closestRaycastHit;
         private bool registered;
+        private bool isSticking;
 
+        public Rigidbody rigidbody;
         public PopulationHandler populationHandler;
 
         private Vector3 destination;
@@ -17,6 +20,8 @@ namespace _Custom.Code.Creature_System.CreatureAgent
         public void Awake()
         {
             gpuiCrowdPrefab = GetComponent<GPUICrowdPrefab>();
+            if (rigidbody) rigidbody.useGravity = false;
+            else Debug.Log(this.name + " needs a rigidbody!");
             SetCreatureType();
             CheckPopulationHandler();
             RegisterCreatureAgent();
@@ -51,6 +56,43 @@ namespace _Custom.Code.Creature_System.CreatureAgent
         public CreatureType GetCreatureType()
         {
             return creatureType;
+        }
+
+        public float GetMaximumStickyDistance()
+        {
+            if (creatureType.Equals(CreatureType.GARDEN_ANT)) return 1f;
+            return 1f;
+        }
+
+        public bool IsSticking()
+        {
+            return isSticking;
+        }
+
+        public void SetClosestRaycastHit(RaycastHit closestRaycastHit)
+        {
+            this.closestRaycastHit = closestRaycastHit;
+        }
+
+        public RaycastHit GetClosestRaycastHit()
+        {
+            return closestRaycastHit;
+        }
+
+        public void SetIsSticking(bool isSticking)
+        {
+            this.isSticking = isSticking;
+        }
+
+        public void SetRigidbody(Rigidbody rigidbody)
+        {
+            this.rigidbody = rigidbody;
+            
+        }
+
+        public Rigidbody GetRigidbody()
+        {
+            return this.rigidbody;
         }
 
         public void SetCreatureType()

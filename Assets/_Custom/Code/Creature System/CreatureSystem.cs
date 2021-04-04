@@ -47,7 +47,7 @@ namespace _Custom.Code.Creature_System
             spawnHandler = GetComponent<SpawnHandler>();
             
             stickyHandler = GetComponent<StickyHandler>();
-            stickyHandler.SetSensorRaycastHandler(sensorRaycastHandler);
+            stickyHandler.SetHandlers(populationHandler, sensorRaycastHandler);
             
             decisionHandler  = GetComponent<DecisionHandler>();
             decisionHandler.SetHelperHandlers(navigationHandler, pheromoneHandler, sensorRaycastHandler, stickyHandler, 
