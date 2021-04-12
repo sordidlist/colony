@@ -42,7 +42,7 @@ namespace _Custom.Code.Creature_System
             RayCastLayerMask = ~LayerMask.GetMask("Ignore Raycast", "Player Character", "Creature Agent");
         }
 
-        public void Update()
+        public void FixedUpdate()
         {
             // Pull aside a batch of creatures upon which to perform sensor raycasting
             List<CreatureAgent.CreatureAgent> batchedCreatureAgents = populationHandler.batchedCreatureAgents;

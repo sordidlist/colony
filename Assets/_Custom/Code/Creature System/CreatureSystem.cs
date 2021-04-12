@@ -12,6 +12,7 @@ namespace _Custom.Code.Creature_System
     [RequireComponent(typeof(SensorRaycastHandler))]
     [RequireComponent(typeof(SpawnHandler))]
     [RequireComponent(typeof(StickyHandler))]
+    [RequireComponent(typeof(StickyGlobHandler))]
     [RequireComponent(typeof(DebugHandler))]
     [RequireComponent(typeof(MetricsHandler))]
     public class CreatureSystem : Singleton<MonoBehaviour>
@@ -25,6 +26,7 @@ namespace _Custom.Code.Creature_System
         private SensorRaycastHandler sensorRaycastHandler;
         private SpawnHandler spawnHandler;
         private StickyHandler stickyHandler;
+        private StickyGlobHandler stickyGlobHandler;
         private DebugHandler debugHandler;
         private MetricsHandler metricsHandler;
 
@@ -37,7 +39,7 @@ namespace _Custom.Code.Creature_System
         {
             animationHandler = GetComponent<AnimationHandler>();
             interactionHandler = GetComponent<InteractionHandler>();
-            navigationHandler = GetComponent<NavigationHandler>();
+            
             pheromoneHandler = GetComponent<PheromoneHandler>();
             populationHandler = GetComponent<PopulationHandler>();
             
@@ -48,6 +50,12 @@ namespace _Custom.Code.Creature_System
             
             stickyHandler = GetComponent<StickyHandler>();
             stickyHandler.SetHandlers(populationHandler, sensorRaycastHandler);
+
+            stickyGlobHandler = GetComponent<StickyGlobHandler>();
+            stickyGlobHandler.SetHandlers(populationHandler, sensorRaycastHandler);
+            
+            navigationHandler = GetComponent<NavigationHandler>();
+            navigationHandler.SetHandlers(populationHandler, pheromoneHandler);
             
             decisionHandler  = GetComponent<DecisionHandler>();
             decisionHandler.SetHelperHandlers(navigationHandler, pheromoneHandler, sensorRaycastHandler, stickyHandler, 

@@ -1,4 +1,6 @@
-﻿using GPUInstancer.CrowdAnimations;
+﻿using System;
+using System.Collections.Generic;
+using GPUInstancer.CrowdAnimations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -8,14 +10,28 @@ namespace _Custom.Code.Creature_System.CreatureAgent
     {
         private GPUICrowdPrefab gpuiCrowdPrefab;
         private CreatureType creatureType;
-        private RaycastHit closestRaycastHit;
         private bool registered;
+        
+        // Sticking
+        private RaycastHit closestRaycastHit;
         private bool isSticking;
+        private bool isFalling;     // Creatures can be stuck together while still falling through the air
+        
+        // Navigation
+        private Vector3 lastDetectedFoodPheromonePosition;
+        private float lastDetectedFoodPheromoneTime;
+        private Vector3 lastDetectedFearPheromonePosition;
+        private float lastDetectedFearPheromoneTime;
+        
+        // Pheromones
+        public float detectsFood;
+        public float detectsThreat;
 
         public Rigidbody rigidbody;
         public PopulationHandler populationHandler;
 
         private Vector3 destination;
+        private List<CreaturePrioritySetting> prioritySettings;
 
         public void Awake()
         {
@@ -23,8 +39,21 @@ namespace _Custom.Code.Creature_System.CreatureAgent
             if (rigidbody) rigidbody.useGravity = false;
             else Debug.Log(this.name + " needs a rigidbody!");
             SetCreatureType();
+            EstablishPriorities();
             CheckPopulationHandler();
             RegisterCreatureAgent();
+        }
+
+        private void EstablishPriorities()
+        {
+            prioritySettings = new List<CreaturePrioritySetting>();
+            if (creatureType.Equals(CreatureType.NEEDLE_ANT))
+            {
+                prioritySettings.Add(new CreaturePrioritySetting(CreaturePriority.GATHER_FOOD, CreaturePriorityValue.AVERAGE));
+                prioritySettings.Add(new CreaturePrioritySetting(CreaturePriority.EXPAND_COLONY, CreaturePriorityValue.LOW));
+                prioritySettings.Add(new CreaturePrioritySetting(CreaturePriority.ESCAPE_THREAT, CreaturePriorityValue.URGENT));
+                prioritySettings.Add(new CreaturePrioritySetting(CreaturePriority.PROTECT_COLONY, CreaturePriorityValue.HIGH));
+            }
         }
 
         public GPUICrowdPrefab GetGPUICrowdPrefab()
@@ -67,6 +96,26 @@ namespace _Custom.Code.Creature_System.CreatureAgent
         public bool IsSticking()
         {
             return isSticking;
+        }
+
+        public bool IsFalling()
+        {
+            return isFalling;
+        }
+
+        public void SetIsFalling(bool isFalling)
+        {
+            this.isFalling = isFalling;
+        }
+
+        public Vector3 GetLastDetectedFoodPheromonePosition()
+        {
+            return lastDetectedFoodPheromonePosition;
+        }
+
+        public void SetLastDetectedFoodPheromonePosition(Vector3 foodPheromonePosition)
+        {
+            lastDetectedFoodPheromonePosition = foodPheromonePosition;
         }
 
         public void SetClosestRaycastHit(RaycastHit closestRaycastHit)
@@ -131,6 +180,48 @@ namespace _Custom.Code.Creature_System.CreatureAgent
                 }
                 populationHandler.RegisterCreatureAgent(this);
             }
+        }
+
+        public void OnTriggerStay(Collider other)
+        {
+            if (other.isTrigger)
+            {
+                if (other.gameObject.layer.Equals(LayerMask.NameToLayer("Food Pheromone")))
+                {
+                    detectsFood = 1f;
+                    lastDetectedFoodPheromonePosition = gameObject.transform.position;
+                } 
+                else if (other.gameObject.layer.Equals(LayerMask.NameToLayer("Fear Pheromone")))
+                {
+                    detectsThreat = 1f;
+                    lastDetectedFearPheromonePosition = gameObject.transform.position;
+                }
+            }
+        }
+
+        public void OnTriggerExit(Collider other)
+        {
+            if (other.isTrigger)
+            {
+                if (other.gameObject.layer.Equals(LayerMask.NameToLayer("Food Pheromone")))
+                {
+                    detectsFood = 0f;
+                } 
+                else if (other.gameObject.layer.Equals(LayerMask.NameToLayer("Fear Pheromone")))
+                {
+                    detectsThreat = 0f;
+                }
+            }
+        }
+
+        public float GetDetectsFood()
+        {
+            return detectsFood;
+        }
+
+        public float GetDetectsThreat()
+        {
+            return detectsThreat;
         }
     }
 }

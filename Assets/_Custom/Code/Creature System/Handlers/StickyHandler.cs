@@ -37,7 +37,10 @@ namespace _Custom.Code.Creature_System
             NativeArray<float> maxStickyDistance =
                 new NativeArray<float>(batchedCreatureAgents.Count, Allocator.Persistent);
             NativeArray<bool> isSticking = new NativeArray<bool>(batchedCreatureAgents.Count, Allocator.Persistent);
+            NativeArray<bool> isFalling = new NativeArray<bool>(batchedCreatureAgents.Count, Allocator.Persistent);
+            NativeArray<int> creatureAgentLayer = new NativeArray<int>(1, Allocator.Persistent);
 
+            creatureAgentLayer[0] = LayerMask.NameToLayer("Creature Agent");
             for (int creatureAgentIndex = 0; creatureAgentIndex < batchedCreatureAgents.Count; creatureAgentIndex++)
             {
                 if (debugMode)
@@ -50,7 +53,22 @@ namespace _Custom.Code.Creature_System
                 
                 CreatureAgent.CreatureAgent batchedCreatureAgent = batchedCreatureAgents[creatureAgentIndex];
                 batchedCreatureAgent.SetClosestRaycastHit(closestHitPointsArray[creatureAgentIndex]);
+                //try
+                //{
+                //isFalling[creatureAgentIndex] = closestHitPointsArray[creatureAgentIndex].collider.gameObject.layer
+                //    .Equals(creatureAgentLayer[0]);
+                isFalling[creatureAgentIndex] = true;
+                if (debugMode)
+                {
+                    Debug.Log("Set isFalling: " + isFalling[creatureAgentIndex]);
+                }
+                //}
+                //catch (NullReferenceException e)
+                //{
+                //    isFalling[creatureAgentIndex] = true;
+                //}
             }
+
             
             if (debugMode) {Debug.Log("Sticky check variables defined.");}
 
@@ -59,7 +77,9 @@ namespace _Custom.Code.Creature_System
                 {
                     closestHitPoints = closestHitPoints,
                     maxStickyDistance = maxStickyDistance,
-                    isSticking = isSticking
+                    isSticking = isSticking,
+                    isFalling = isFalling,
+                    creatureAgentLayer = creatureAgentLayer
                 }.Schedule(batchedCreatureAgents.Count, 64);
 
             checkCreatureAgentStickinessJob.Complete();
@@ -69,6 +89,7 @@ namespace _Custom.Code.Creature_System
             for (int creatureAgentIndex = 0; creatureAgentIndex < batchedCreatureAgents.Count; creatureAgentIndex++)
             {
                 batchedCreatureAgents[creatureAgentIndex].SetIsSticking(isSticking[creatureAgentIndex]);
+                batchedCreatureAgents[creatureAgentIndex].SetIsFalling(isFalling[creatureAgentIndex]);
                 if (debugMode) {Debug.Log("Creature agent " + batchedCreatureAgents[creatureAgentIndex].name + 
                                           " stickiness is set to : " + batchedCreatureAgents[creatureAgentIndex].IsSticking());}
                 if (debugMode) {Debug.Log("Creature agent " + batchedCreatureAgents[creatureAgentIndex].name + 
@@ -80,6 +101,8 @@ namespace _Custom.Code.Creature_System
             closestHitPoints.Dispose();
             maxStickyDistance.Dispose();
             isSticking.Dispose();
+            isFalling.Dispose();
+            creatureAgentLayer.Dispose();
         }
 
         public void SetHandlers(PopulationHandler populationHandler, SensorRaycastHandler sensorRaycastHandler)
@@ -147,10 +170,25 @@ namespace _Custom.Code.Creature_System
         private void Gravitate(CreatureAgent.CreatureAgent creatureAgent)
         {
             Transform creatureTransform = creatureAgent.GetRigidbody().transform;
-            if (creatureAgent.GetClosestRaycastHit().distance < creatureAgent.GetMaximumStickyDistance())
-                creatureAgent.GetRigidbody().AddForce(-creatureTransform.up * (Time.deltaTime * CreatureAgentConfig.DEFAULT_GRAVITY_SPEED));
+            if (creatureAgent.IsSticking() && !creatureAgent.IsFalling())
+            {
+                Vector3 gravitateForceVector = -creatureTransform.up *
+                                               (Time.deltaTime * CreatureAgentConfig.STICKING_GRAVITY_SPEED);
+                creatureAgent.GetRigidbody().AddForce(gravitateForceVector);
+            }
+            else if (creatureAgent.IsSticking() && creatureAgent.IsFalling())
+            {
+                Vector3 gravitateForceVector = (-creatureTransform.up *
+                                               (Time.deltaTime * CreatureAgentConfig.STICKING_GRAVITY_SPEED)) + 
+                                               (-Vector3.up * (Time.deltaTime * CreatureAgentConfig.DEFAULT_GRAVITY_SPEED));
+                creatureAgent.GetRigidbody().AddForce(gravitateForceVector);
+            }
             else
-                creatureAgent.GetRigidbody().AddForce(-Vector3.up * (Time.deltaTime * CreatureAgentConfig.DEFAULT_GRAVITY_SPEED));
+            {
+                Vector3 gravitateForceVector = -Vector3.up * (Time.deltaTime * CreatureAgentConfig.DEFAULT_GRAVITY_SPEED);
+                creatureAgent.GetRigidbody()
+                    .AddForce(gravitateForceVector);
+            }
         }
     }
 }

@@ -57,8 +57,8 @@ namespace _Custom.Code.Creature_System.Debug_System
             if (executeDebugHandler && sensorRaycastHandler.sensorHitPointsArray != null)
             {
                 // Establish drawing variables
-                
-                if(debugMode) Debug.Log("Debug Handler establishing drawing variables...");
+
+                if (debugMode) Debug.Log("Debug Handler establishing drawing variables...");
 
                 CommandBuilder builder = DrawingManager.GetBuilder(true);
                 builder.Preallocate(DebugSystemConfig.LINE_DRAWER_COMMAND_BUILDER_ALLOCATE_SIZE *
@@ -72,23 +72,27 @@ namespace _Custom.Code.Creature_System.Debug_System
                         .Length;
                     scanDirectionIndex++)
                 {
-                    if(debugMode) Debug.Log("Debug Handler establishing direction: " + 
-                                            CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS[scanDirectionIndex] + "...");
+                    if (debugMode)
+                        Debug.Log("Debug Handler establishing direction: " +
+                                  CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS[
+                                      scanDirectionIndex] + "...");
                     scanDirections[scanDirectionIndex] =
                         CreatureAgentConfig.DIRECTONS_TO_CAST_SENSOR_RAYCASTS_FROM_CREATURE_AGENTS[scanDirectionIndex];
                 }
 
                 NativeArray<Color> lineColors = new NativeArray<Color>(scanDirections.Length, Allocator.Persistent);
-                if(debugMode) Debug.Log("Debug Handler establishing line colors...");
+                if (debugMode) Debug.Log("Debug Handler establishing line colors...");
 
                 for (int lineColorIndex = 0; lineColorIndex < lineColors.Length; lineColorIndex++)
                 {
-                    float colorValue =  (lineColorIndex / (float) lineColors.Length);
+                    float colorValue = (lineColorIndex / (float) lineColors.Length);
                     lineColors[lineColorIndex] = new Color(colorValue, colorValue, colorValue);
                 }
 
                 int creatureAgentCount = populationHandler.GetCurrentCreatureAgentBatchSize();
-                if(debugMode) Debug.Log("Debug Handler received batch of " + creatureAgentCount + " creatures to draw lines for.");
+                if (debugMode)
+                    Debug.Log("Debug Handler received batch of " + creatureAgentCount +
+                              " creatures to draw lines for.");
 
                 NativeArray<Vector3> creatureLinesOriginPoints =
                     new NativeArray<Vector3>(creatureAgentCount, Allocator.Persistent);
@@ -102,7 +106,8 @@ namespace _Custom.Code.Creature_System.Debug_System
                     new NativeArray<Vector3>(creatureAgentCount, Allocator.Persistent);
                 NativeArray<Vector3> objectBiteNormals =
                     new NativeArray<Vector3>(creatureAgentCount, Allocator.Persistent);
-                NativeArray<bool> isSticking = new NativeArray<bool>(creatureAgentCount, Allocator.Persistent);
+                NativeArray<int> isSticking = new NativeArray<int>(creatureAgentCount, Allocator.Persistent);
+                NativeArray<int> pheromoneDetection = new NativeArray<int>(creatureAgentCount, Allocator.Persistent);
 
                 for (int creatureAgentIndex = 0;
                     creatureAgentIndex < creatureAgentCount;
@@ -110,12 +115,15 @@ namespace _Custom.Code.Creature_System.Debug_System
                 {
                     try
                     {
-                        if(debugMode) Debug.Log("Debug Handler drawing lines for creature agent: " + creatureAgentIndex + "...");
+                        if (debugMode)
+                            Debug.Log("Debug Handler drawing lines for creature agent: " + creatureAgentIndex + "...");
                         CreatureAgent.CreatureAgent creatureAgent =
                             populationHandler.batchedCreatureAgents[creatureAgentIndex];
 
                         Vector3 creatureLinesOriginPoint = creatureAgent.gameObject.transform.position;
-                        if(debugMode) Debug.Log("Debug Handler creature agent: " + creatureAgentIndex + " origin point: " + creatureLinesOriginPoint);
+                        if (debugMode)
+                            Debug.Log("Debug Handler creature agent: " + creatureAgentIndex + " origin point: " +
+                                      creatureLinesOriginPoint);
                         if (debugMode)
                             Debug.Log("Origin Points is created: " + creatureLinesOriginPoints.IsCreated +
                                       ", capacity: " + creatureLinesOriginPoints.Length);
@@ -125,7 +133,7 @@ namespace _Custom.Code.Creature_System.Debug_System
                         for (int scanDirectionIndex = 0;
                             scanDirectionIndex < scanDirections.Length;
                             scanDirectionIndex++)
-                    {
+                        {
                             raycastHitPoints[creatureAgentIndex * scanDirections.Length + scanDirectionIndex] =
                                 sensorRaycastHandler.sensorHitPointsArray[
                                     creatureAgentIndex * scanDirections.Length + scanDirectionIndex];
@@ -134,20 +142,50 @@ namespace _Custom.Code.Creature_System.Debug_System
                                     scanDirections.Length + scanDirectionIndex + "] = " + raycastHitPoints[
                                         creatureAgentIndex *
                                         scanDirections.Length + scanDirectionIndex]);
-                    }
+                        }
 
                         closestHitPoints[creatureAgentIndex] =
                             sensorRaycastHandler.closestHitPointsArray[creatureAgentIndex];
-                        if(debugMode) 
-                            Debug.Log("Debug Handler closestHitPoints[" + creatureAgentIndex + "] = " + closestHitPoints[creatureAgentIndex]);
+                        if (debugMode)
+                            Debug.Log("Debug Handler closestHitPoints[" + creatureAgentIndex + "] = " +
+                                      closestHitPoints[creatureAgentIndex]);
+
+                        if (creatureAgent.GetDetectsFood() > creatureAgent.GetDetectsThreat())
+                        {
+                            pheromoneDetection[creatureAgentIndex] = 1;
+                        } 
+                        else if (creatureAgent.GetDetectsThreat() > creatureAgent.GetDetectsFood())
+                        {
+                            pheromoneDetection[creatureAgentIndex] = 2;
+                        } 
+                        else if (creatureAgent.GetDetectsFood() == 0 && creatureAgent.GetDetectsThreat() == 0)
+                        {
+                            pheromoneDetection[creatureAgentIndex] = 0;
+                        }
+                        else
+                        {
+                            pheromoneDetection[creatureAgentIndex] = 3;
+                        }
 
                         //objectBitePoints[creatureAgentIndex] = creatureAgent.objectBitePoint;
                         //objectBiteNormals[creatureAgentIndex] = creatureAgent.objectBiteNormal;
 
                         hitPointSphereRadius[0] = DebugSystemConfig.DEBUG_RAYCASTHIT_SPHERE_COLLIDER_RADIUS;
-                        isSticking[creatureAgentIndex] = creatureAgent.IsSticking();
-                        if(debugMode) 
-                            Debug.Log("Debug Handler closestHitPoints[" + creatureAgentIndex + "] = " + closestHitPoints[creatureAgentIndex]);
+                        if (creatureAgent.IsSticking() && creatureAgent.IsFalling())
+                        {
+                            isSticking[creatureAgentIndex] = 2;
+                        } else if (creatureAgent.IsSticking())
+                        {
+                            isSticking[creatureAgentIndex] = 0;
+                        }
+                        else
+                        {
+                            isSticking[creatureAgentIndex] = 1;
+                        }
+                        
+                        if (debugMode)
+                            Debug.Log("Debug Handler closestHitPoints[" + creatureAgentIndex + "] = " +
+                                      closestHitPoints[creatureAgentIndex]);
                     }
                     catch (MissingReferenceException e)
                     {
@@ -170,7 +208,8 @@ namespace _Custom.Code.Creature_System.Debug_System
                         closestHitPoints = closestHitPoints,
                         objectBitePoints = objectBitePoints,
                         objectBiteNormals = objectBiteNormals,
-                        isSticking = isSticking
+                        isSticking = isSticking,
+                        pheromoneDetection = pheromoneDetection
                     };
                     drawingJob.Schedule().Complete();
                 }
@@ -184,6 +223,7 @@ namespace _Custom.Code.Creature_System.Debug_System
                 objectBitePoints.Dispose();
                 objectBiteNormals.Dispose();
                 isSticking.Dispose();
+                pheromoneDetection.Dispose();
                 builder.Dispose();
             }
         }

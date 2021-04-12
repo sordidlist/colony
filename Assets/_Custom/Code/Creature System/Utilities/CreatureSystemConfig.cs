@@ -23,7 +23,10 @@ namespace _Custom.Code.Creature_System.Utilities
         public static float MAX_CREATURE_AGENT_SCAN_DISTANCE = 10f;
         public static int SENSOR_RAYCAST_PARALLEL_JOBS_COUNT = 32;
         public static float DEFAULT_MAGNETIC_ROTATION_SPEED_GROUNDED = 20f;
-        public static float DEFAULT_GRAVITY_SPEED = 10000f;
+        public static float DEFAULT_GRAVITY_SPEED = 500f;
+        public static float STICKING_GRAVITY_SPEED = 25000f;
+
+        public static float MAX_DURATION_UNTIL_FORGET_FOOD_PHEROMONE = 10f;
     }
     
     public static class DebugSystemConfig 
@@ -34,5 +37,13 @@ namespace _Custom.Code.Creature_System.Utilities
         public static float DEBUG_RAYCASTHIT_SPHERE_COLLIDER_RADIUS = 1.0f;
         public readonly static Color IS_STICKING_COLOR = Color.blue;
         public readonly static Color IS_NOT_STICKING_COLOR = Color.magenta;
+        public readonly static Color IS_STICKING_AND_FALLING_COLOR = Color.blue + Color.white;
+
+        public readonly static Color DETECTS_FOOD = Color.yellow + Color.red;
+        public readonly static Color DETECTS_THREAT = Color.red + Color.magenta + Color.blue;
+        public readonly static Color DETECTS_NOTHING = Color.gray;
+        public readonly static Color DETECTS_MULTIPLE = Color.cyan + Color.yellow;
+
+        public readonly static float PHEROMONE_INDICATOR_OFFSET = 0.5f;
     }
 }

@@ -80,11 +80,19 @@ namespace _Custom.Code.Creature_System
             public NativeArray<RaycastHit> closestHitPoints;
             public NativeArray<float> maxStickyDistance;
             public NativeArray<bool> isSticking;
+            public NativeArray<bool> isFalling;
+            public NativeArray<int> creatureAgentLayer;
             
             public void Execute(int index)
             {
-                if (closestHitPoints[index].point.Equals(Vector3.zero)) isSticking[index] = false;
-                else isSticking[index] = closestHitPoints[index].distance <= maxStickyDistance[index];
+                if (closestHitPoints[index].point.Equals(Vector3.zero))
+                {
+                    isSticking[index] = false;
+                }
+                else
+                {
+                    isSticking[index] = closestHitPoints[index].distance <= maxStickyDistance[index];
+                }
             }
         }
         
@@ -98,7 +106,8 @@ namespace _Custom.Code.Creature_System
             [ReadOnly] public NativeArray<Vector3> objectBitePoints;
             [ReadOnly] public NativeArray<Vector3> objectBiteNormals;
             [ReadOnly] public NativeArray<Color> lineColors;
-            [ReadOnly] public NativeArray<bool> isSticking;
+            [ReadOnly] public NativeArray<int> isSticking;
+            [ReadOnly] public NativeArray<int> pheromoneDetection;
 
             public NativeArray<RaycastHit> raycastHitPoints;
             public NativeArray<RaycastHit> closestHitPoints;
@@ -108,7 +117,7 @@ namespace _Custom.Code.Creature_System
                 for (var originIndex = 0; originIndex < origin.Length; originIndex++)
                 {
                     var color = 0;
-                    for (var hitPointIndex = originIndex * directionsToScan.Length;
+                    for (int hitPointIndex = originIndex * directionsToScan.Length;
                         hitPointIndex < originIndex * directionsToScan.Length + directionsToScan.Length;
                         hitPointIndex++)
                     {
@@ -141,12 +150,28 @@ namespace _Custom.Code.Creature_System
                     builder.WireSphere(closestHitPoints[originIndex].point, sphereRadius[0] * 0.5f,
                         DebugSystemConfig.CLOSEST_HIT_POINT_LINE_COLOR);
                     
-                    if (isSticking[originIndex])
+                    if (isSticking[originIndex] == 0)
                         builder.WireSphere(origin[originIndex], sphereRadius[0],
                             DebugSystemConfig.IS_STICKING_COLOR);
-                    else
+                    else if (isSticking[originIndex] == 1)
                         builder.WireSphere(origin[originIndex], sphereRadius[0],
                             DebugSystemConfig.IS_NOT_STICKING_COLOR);
+                    else if (isSticking[originIndex] == 2)
+                        builder.WireSphere(origin[originIndex], sphereRadius[0],
+                            DebugSystemConfig.IS_STICKING_AND_FALLING_COLOR);
+                            
+                    if (pheromoneDetection[originIndex] == 2)
+                        builder.WireSphere(origin[originIndex] + new Vector3(0f, DebugSystemConfig.PHEROMONE_INDICATOR_OFFSET, 0f), 
+                            sphereRadius[0] * 0.25f, DebugSystemConfig.DETECTS_FOOD);
+                    if (pheromoneDetection[originIndex] == 1)
+                        builder.WireSphere(origin[originIndex] + new Vector3(0f, DebugSystemConfig.PHEROMONE_INDICATOR_OFFSET, 0f), 
+                        sphereRadius[0] * 0.25f, DebugSystemConfig.DETECTS_THREAT);
+                    if (pheromoneDetection[originIndex] == 0)
+                        builder.WireSphere(origin[originIndex] + new Vector3(0f, DebugSystemConfig.PHEROMONE_INDICATOR_OFFSET, 0f), 
+                        sphereRadius[0] * 0.25f, DebugSystemConfig.DETECTS_NOTHING);
+                    if (pheromoneDetection[originIndex] == 3)
+                        builder.WireSphere(origin[originIndex] + new Vector3(0f, DebugSystemConfig.PHEROMONE_INDICATOR_OFFSET, 0f), 
+                        sphereRadius[0] * 0.25f, DebugSystemConfig.DETECTS_MULTIPLE);
                 }
             }
         }
