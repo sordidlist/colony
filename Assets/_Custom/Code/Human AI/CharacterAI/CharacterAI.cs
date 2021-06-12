@@ -44,7 +44,9 @@ namespace _Custom.Code
                 }
                 catch (NullReferenceException e)
                 {
-                    
+                    // Character is very idle, has absolutely nothing to do.
+                    Debug.LogWarning(gameObject.name + " currently has zero tasks in the queue, and is very " +
+                                     "super bored :(");
                 }
 
                 decisionTimer = 0f;
