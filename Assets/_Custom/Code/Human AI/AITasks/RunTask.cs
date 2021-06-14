@@ -6,7 +6,8 @@ namespace _Custom.Code.AITasks
     {
         public RunTask(Animator animator) : base(animator)
         {
-            SetTaskConfiguration("Movement", 1f);
+            SetAnimatorParameter("Movement", 1f);
+            SetAnimatorParameter("Rotate", 0f);
         }
     }
 }

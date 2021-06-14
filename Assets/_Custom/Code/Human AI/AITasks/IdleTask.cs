@@ -6,7 +6,8 @@ namespace _Custom.Code.AITasks
     {
         public IdleTask(Animator animator) : base(animator)
         {
-            SetTaskConfiguration("Movement", 0f);
+            SetAnimatorParameter("Movement", 0f);
+            SetAnimatorParameter("Rotate", 0f);
         }
     }
 }

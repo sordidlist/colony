@@ -6,7 +6,8 @@ namespace _Custom.Code.AITasks
     {
         public WalkTask(Animator animator) : base(animator)
         {
-            SetTaskConfiguration("Movement", 0.5f);
+            SetAnimatorParameter("Movement", 0.5f);
+            SetAnimatorParameter("Rotate", 0);
         }
     }
 }

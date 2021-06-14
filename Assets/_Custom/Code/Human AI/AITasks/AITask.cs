@@ -9,8 +9,15 @@ namespace _Custom.Code
         {
             this.animator = animator;
         }
+        
+        public AITask(Animator animator, Vector3 aiTaskPosition)
+        {
+            this.animator = animator;
+            this.aiTaskPosition = aiTaskPosition;
+        }
 
         public Animator animator;
+        public Vector3 aiTaskPosition;
         private AITaskAnimatorConfiguration aiTaskAnimatorConfiguration;
         private ParameterType parameterType;
 
@@ -37,16 +44,13 @@ namespace _Custom.Code
         {
             FLOAT,
             BOOL,
-            TRIGGER
+            TRIGGER,
         }
 
         public void AnimateTask()
         {
             if (parameterType.Equals(ParameterType.FLOAT))
             {
-                Debug.Log("Animating task: " + aiTaskAnimatorConfiguration.parameterName + "  Value: " +
-                          aiTaskAnimatorConfiguration.parameterValueFloat + "  " + animator);
-                
                 animator.SetFloat(aiTaskAnimatorConfiguration.parameterName,
                     aiTaskAnimatorConfiguration.parameterValueFloat);
             }
@@ -57,13 +61,13 @@ namespace _Custom.Code
             }
         }
 
-        public void SetTaskConfiguration(string parameterName, float parameterValue)
+        public void SetAnimatorParameter(string parameterName, float parameterValue)
         {
             aiTaskAnimatorConfiguration = new AITaskAnimatorConfiguration(parameterName, parameterValue);
             parameterType = ParameterType.FLOAT;
         }
 
-        public void SetTaskConfiguration(string parameterName, bool parameterValue)
+        public void SetAnimatorParameter(string parameterName, bool parameterValue)
         {
             aiTaskAnimatorConfiguration = new AITaskAnimatorConfiguration(parameterName, parameterValue);
             parameterType = ParameterType.BOOL;

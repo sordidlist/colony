@@ -9,50 +9,48 @@ namespace _Custom.Code
     {
         public CharacterProperties characterProperties;
         public PriorityQueue<AITask, AITaskPriority> aiTasks;
-        private Animator animator;
         public float decisionTimer;
+        private Animator animator;
 
         public void Start()
         {
             characterProperties = new CharacterProperties();
             animator = GetComponent<Animator>();
-
             decisionTimer = 0.0f;
-
-            AITask idleTask = new IdleTask(animator);
-            AITaskPriority idleTaskPriority = new AITaskPriority(TaskPriorityConfigs.IDLE_TASK_PRIORITY);
             
-            AITask walkTask = new WalkTask(animator);
-            AITaskPriority walkTaskPriority = new AITaskPriority(TaskPriorityConfigs.WALK_TASK_PRIORITY);
-            
-            AITask runTask = new RunTask(animator);
-            AITaskPriority runTaskPriority = new AITaskPriority(TaskPriorityConfigs.RUN_TASK_PRIORITY);
-            aiTasks = new PriorityQueue<AITask, AITaskPriority>(idleTaskPriority);
-
-            aiTasks.Insert(idleTask, idleTaskPriority);
-            aiTasks.Insert(walkTask, walkTaskPriority);
-            aiTasks.Insert(runTask, runTaskPriority);
+            AITaskPriority lowestTaskPriority = new AITaskPriority(TaskPriorityConfigs.IDLE_TASK_PRIORITY);
+            aiTasks = new PriorityQueue<AITask, AITaskPriority>(lowestTaskPriority);
         }
 
         public void Update()
         {
-            if (decisionTimer >= HumanAIConfigs.MAX_DURATION_BETWEEN_TASK_CHANGES)
+            if (IsTimeForTheNextTask())
             {
                 try
                 {
                     aiTasks.Pop().AnimateTask();
+                    decisionTimer = 0f;
                 }
                 catch (NullReferenceException e)
                 {
-                    // Character is very idle, has absolutely nothing to do.
-                    Debug.LogWarning(gameObject.name + " currently has zero tasks in the queue, and is very " +
-                                     "super bored :(");
+                    AITask idleTask = new IdleTask(animator);
+                    AITaskPriority idleTaskPriority = new AITaskPriority(TaskPriorityConfigs.IDLE_TASK_PRIORITY);
+                    aiTasks.Insert(idleTask, idleTaskPriority);
+                    EvaluateWhatTheNextTaskShouldBe();
                 }
-
-                decisionTimer = 0f;
             }
 
             decisionTimer += Time.deltaTime;
+        }
+
+        private bool IsTimeForTheNextTask()
+        {
+            return decisionTimer >= HumanAIConfigs.MAX_DURATION_BETWEEN_TASK_CHANGES;
+        }
+
+        private void EvaluateWhatTheNextTaskShouldBe()
+        {
+            
         }
     }
 }
