@@ -3,11 +3,14 @@ using _Custom.Code.AITasks;
 using _Custom.Code.Human_AI.AITasks;
 using DataStructures.PriorityQueue;
 using DG.Tweening;
+using Pathfinding;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace _Custom.Code
 {
+    [RequireComponent(typeof(AIPath))]
+    [RequireComponent(typeof(Seeker))]
     public class CharacterAI : MonoBehaviour
     {
         public CharacterProperties characterProperties;
@@ -16,19 +19,25 @@ namespace _Custom.Code
         private Animator animator;
         public RectTransform taskIcon;
         public Transform taskIconTrackingTransform;
+        private AIPath aiPath;
+        private Seeker seeker;
 
         public void Start()
         {
             characterProperties = new CharacterProperties();
             animator = GetComponent<Animator>();
+            aiPath = GetComponent<AIPath>();
+            seeker = GetComponent<Seeker>();
             decisionTimer = 0.0f;
+            aiPath.canMove = false;
+            aiPath.enableRotation = false;
             
             AITaskPriority lowestTaskPriority = new AITaskPriority(TaskPriorityConfigs.IDLE_TASK_PRIORITY);
             aiTasks = new PriorityQueue<AITask, AITaskPriority>(lowestTaskPriority);
             taskIcon = GameObject.Find("Icons Canvas").transform.Find(gameObject.name + "TaskIcon").GetComponent<RectTransform>();
             taskIconTrackingTransform = transform.Find("Task Icon Target");
 
-            NavigateTask navigateTask = new NavigateTask(animator, GameObject.Find("Cube").transform);
+            NavigateTask navigateTask = new NavigateTask(animator, seeker, GameObject.Find("Cube").transform);
             AITaskPriority navigateTaskPriority = new AITaskPriority(TaskPriorityConfigs.NAVIGATE_TASK_PRIORITY);
             aiTasks.Insert(navigateTask, navigateTaskPriority);
         }
