@@ -1,6 +1,7 @@
 ﻿using System;
 using _Custom.Code.AITasks;
 using DataStructures.PriorityQueue;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,8 +24,9 @@ namespace _Custom.Code
             
             AITaskPriority lowestTaskPriority = new AITaskPriority(TaskPriorityConfigs.IDLE_TASK_PRIORITY);
             aiTasks = new PriorityQueue<AITask, AITaskPriority>(lowestTaskPriority);
-            taskIcon = GameObject.Find("Icons Canvas").transform.Find(gameObject.name).GetComponent<RectTransform>();
+            taskIcon = GameObject.Find("Icons Canvas").transform.Find(gameObject.name + "TaskIcon").GetComponent<RectTransform>();
             taskIconTrackingTransform = transform.Find("Task Icon Target");
+            taskIconTrackingTransform.DOMoveX(0.5f, 3f, false);
         }
 
         public void Update()
