@@ -28,6 +28,7 @@ namespace _Custom.Code
             try
             {
                 humanCharacters.Add(GameObject.Find(characterName).GetComponent<CharacterAI>());
+                transform.Find(characterName + "TaskIcon").gameObject.SetActive(true);
             }
             catch (NullReferenceException e)
             {

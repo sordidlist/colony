@@ -1,5 +1,6 @@
 ﻿using System;
 using _Custom.Code.AITasks;
+using _Custom.Code.Human_AI.AITasks;
 using DataStructures.PriorityQueue;
 using DG.Tweening;
 using UnityEngine;
@@ -26,7 +27,10 @@ namespace _Custom.Code
             aiTasks = new PriorityQueue<AITask, AITaskPriority>(lowestTaskPriority);
             taskIcon = GameObject.Find("Icons Canvas").transform.Find(gameObject.name + "TaskIcon").GetComponent<RectTransform>();
             taskIconTrackingTransform = transform.Find("Task Icon Target");
-            taskIconTrackingTransform.DOMoveX(0.5f, 3f, false);
+
+            NavigateTask navigateTask = new NavigateTask(animator, GameObject.Find("Cube").transform);
+            AITaskPriority navigateTaskPriority = new AITaskPriority(TaskPriorityConfigs.NAVIGATE_TASK_PRIORITY);
+            aiTasks.Insert(navigateTask, navigateTaskPriority);
         }
 
         public void Update()
@@ -35,8 +39,11 @@ namespace _Custom.Code
             {
                 try
                 {
-                    aiTasks.Pop().AnimateTask();
+                    BounceTaskIconIn();
+                    AITask currentTask = aiTasks.Pop();
+                    currentTask.AnimateTask();
                     decisionTimer = 0f;
+                    BounceTaskIconOut();
                 }
                 catch (NullReferenceException e)
                 {
@@ -58,6 +65,18 @@ namespace _Custom.Code
         private void EvaluateWhatTheNextTaskShouldBe()
         {
             
+        }
+
+        private void BounceTaskIconIn()
+        {
+            taskIconTrackingTransform.DOScaleX(0.5f, 1f);
+            taskIconTrackingTransform.DOScaleY(0.5f, 1f);
+        }
+        
+        private void BounceTaskIconOut()
+        {
+            taskIconTrackingTransform.DOScaleX(0f, 1f);
+            taskIconTrackingTransform.DOScaleY(0f, 1f);
         }
     }
 }

@@ -10,14 +10,14 @@ namespace _Custom.Code
             this.animator = animator;
         }
         
-        public AITask(Animator animator, Vector3 aiTaskPosition)
+        public AITask(Animator animator, Transform aiTaskTransform)
         {
             this.animator = animator;
-            this.aiTaskPosition = aiTaskPosition;
+            this.aiTaskTransform = aiTaskTransform;
         }
 
         public Animator animator;
-        public Vector3 aiTaskPosition;
+        public Transform aiTaskTransform;
         private AITaskAnimatorConfiguration aiTaskAnimatorConfiguration;
         private ParameterType parameterType;
 
